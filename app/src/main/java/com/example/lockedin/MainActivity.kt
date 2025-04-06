@@ -48,23 +48,30 @@ fun MyAppContent(context: Context) {
     // State for selected apps; maps package names to a boolean (selected or not)
     val selectedApps = remember { mutableStateMapOf<String, Boolean>() }
 
-    // Load installed apps on first composition
+    // Load installed apps and previously selected apps on first composition
     LaunchedEffect(Unit) {
         val pm = context.packageManager
         val installedApps = pm.getInstalledApplications(PackageManager.GET_META_DATA)
-        // Filter out system apps; include updated system apps (which are user-installed)
+        // Filter out system apps (except updated ones)
         val thirdPartyApps = installedApps.filter { app ->
-            (app.flags and ApplicationInfo.FLAG_SYSTEM) == 0 ||
-                    (app.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
+            ((app.flags and ApplicationInfo.FLAG_SYSTEM) == 0 ||
+                    (app.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0) &&
+                    (app.packageName != "com.example.lockedin")
         }
         appsList.value = thirdPartyApps
+
+        // Load saved selections from SharedPreferences
+        val prefs = context.getSharedPreferences("blocked_apps", Context.MODE_PRIVATE)
+        val savedApps = prefs.getStringSet("apps", setOf()) ?: setOf()
+        thirdPartyApps.forEach { app ->
+            if (savedApps.contains(app.packageName)) {
+                selectedApps[app.packageName] = true
+            }
+        }
     }
 
-    // Build the UI
     Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("Select Apps to Lock") })
-        }
+        topBar = { TopAppBar(title = { Text("Select Apps to Lock") }) }
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
@@ -78,9 +85,9 @@ fun MyAppContent(context: Context) {
                 Button(
                     modifier = Modifier.padding(12.dp),
                     onClick = {
-                        // Gets the package name from the app that's selected
+                        // Gets the package names for selected apps
                         val blockedApps = selectedApps.filter { it.value }.keys
-
+                        // Save the selections in SharedPreferences
                         val prefs = context.getSharedPreferences("blocked_apps", Context.MODE_PRIVATE)
                         prefs.edit().putStringSet("apps", blockedApps.toSet()).apply()
                         println("Blocked apps updated: $blockedApps")
