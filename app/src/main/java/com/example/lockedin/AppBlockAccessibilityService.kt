@@ -17,10 +17,10 @@ class AppBlockAccessibilityService : AccessibilityService() {
             Log.d("Event occured!", "Something happened")
             if(it.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
 
-                println("Event type: TYPE_WINDOW_STATE_CHANGED")
+                Log.d("Event type:", "TYPE_WINDOW_STATE_CHANGED")
                 val currentPackage = it.packageName?.toString() ?: return
                 if (isBlocked(currentPackage)) {
-                    println("Event type: App That opened is a blocked app")
+                    Log.d("Event type:", "App That opened is a blocked app")
                     // Launches the custom "you're locked out" activity
                     val intent = Intent(this, LockedOutActivity::class.java).apply {
                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
