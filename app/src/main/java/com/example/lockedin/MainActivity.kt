@@ -12,6 +12,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -196,7 +197,15 @@ fun AppItem(appInfo: ApplicationInfo, context: Context, selectedApps: MutableMap
     // Track the selection state for the current app.
     var isSelected by remember { mutableStateOf(selectedApps[appInfo.packageName] ?: false) }
 
-    Column(modifier = Modifier.fillMaxWidth()) {
+    // The entire row is now clickable.
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                isSelected = !isSelected
+                selectedApps[appInfo.packageName] = isSelected
+            }
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -218,10 +227,8 @@ fun AppItem(appInfo: ApplicationInfo, context: Context, selectedApps: MutableMap
             }
             Checkbox(
                 checked = isSelected,
-                onCheckedChange = { checked ->
-                    isSelected = checked
-                    selectedApps[appInfo.packageName] = checked
-                }
+                // Remove separate click handling – the row's clickable takes care of toggling.
+                onCheckedChange = null
             )
         }
         HorizontalDivider()

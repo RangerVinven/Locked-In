@@ -50,6 +50,19 @@ fun TimeRangeScreen(appName: String, packageName: String, modifier: Modifier = M
     var startTime by remember { mutableStateOf("Select Start Time") }
     var endTime by remember { mutableStateOf("Select End Time") }
 
+    // Load saved time range if it exists.
+    LaunchedEffect(packageName) {
+        val prefs = context.getSharedPreferences("app_lock_times", Context.MODE_PRIVATE)
+        val savedTimeRange = prefs.getString("time_range_$packageName", null)
+        if (savedTimeRange != null) {
+            val parts = savedTimeRange.split("-")
+            if (parts.size == 2) {
+                startTime = parts[0]
+                endTime = parts[1]
+            }
+        }
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -57,10 +70,10 @@ fun TimeRangeScreen(appName: String, packageName: String, modifier: Modifier = M
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Display the app's name at the top
+        // Display the app's name at the top.
         Text(text = appName, style = MaterialTheme.typography.headlineMedium)
         Spacer(modifier = Modifier.height(24.dp))
-        // Button to select the start time
+        // Button to select the start time.
         Button(onClick = {
             val calendar = Calendar.getInstance()
             TimePickerDialog(
@@ -74,11 +87,11 @@ fun TimeRangeScreen(appName: String, packageName: String, modifier: Modifier = M
             ).show()
         },
             shape = RectangleShape
-        ) {
+            ) {
             Text(text = startTime)
         }
         Spacer(modifier = Modifier.height(16.dp))
-        // Button to select the end time
+        // Button to select the end time.
         Button(onClick = {
             val calendar = Calendar.getInstance()
             TimePickerDialog(
@@ -117,3 +130,4 @@ fun TimeRangeScreen(appName: String, packageName: String, modifier: Modifier = M
         }
     }
 }
+
