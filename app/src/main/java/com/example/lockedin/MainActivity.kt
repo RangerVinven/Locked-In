@@ -4,16 +4,23 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.border
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -39,14 +46,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.unit.dp
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Set the content view with Compose
+        // Set the content view with Compose.
         setContent {
             MyAppContent(context = this)
         }
@@ -61,7 +68,7 @@ fun MyBottomAppBar(context: Context) {
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Home icon: Launches MainActivity or a Home activity.
+            // Home icon: Launches MainActivity.
             IconButton(onClick = {
                 val intent = Intent(context, MainActivity::class.java)
                 context.startActivity(intent)
@@ -71,17 +78,19 @@ fun MyBottomAppBar(context: Context) {
                     contentDescription = "Home"
                 )
             }
+            // Time icon: Launches AppListActivity.
             IconButton(onClick = {
-                 val intent = Intent(context, AppListActivity::class.java)
-                 context.startActivity(intent)
+                val intent = Intent(context, AppListActivity::class.java)
+                context.startActivity(intent)
             }) {
                 Icon(
                     imageVector = Icons.Filled.DateRange,
                     contentDescription = "Time"
                 )
             }
-            // Settings icon: Launches a Settings activity.
+            // Settings icon: Launches a Settings activity (if needed).
             IconButton(onClick = {
+                // Uncomment if you add a SettingsActivity.
                 // val intent = Intent(context, SettingsActivity::class.java)
                 // context.startActivity(intent)
             }) {
@@ -97,16 +106,16 @@ fun MyBottomAppBar(context: Context) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyAppContent(context: Context) {
-    // State holding the list of third-party installed apps
+    // State holding the list of third-party installed apps.
     val appsList = remember { mutableStateOf<List<ApplicationInfo>>(emptyList()) }
-    // State for selected apps; maps package names to a boolean (selected or not)
+    // State for selected apps; maps package names to a boolean (selected or not).
     val selectedApps = remember { mutableStateMapOf<String, Boolean>() }
 
-    // Load installed apps and previously selected apps on first composition
+    // Load installed apps and previously selected apps on first composition.
     LaunchedEffect(Unit) {
         val pm = context.packageManager
         val installedApps = pm.getInstalledApplications(PackageManager.GET_META_DATA)
-        // Filter out system apps (except updated ones)
+        // Filter out system apps (except updated ones) and exclude your own app.
         val thirdPartyApps = installedApps.filter { app ->
             ((app.flags and ApplicationInfo.FLAG_SYSTEM) == 0 ||
                     (app.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0) &&
@@ -114,7 +123,7 @@ fun MyAppContent(context: Context) {
         }
         appsList.value = thirdPartyApps
 
-        // Load saved selections from SharedPreferences
+        // Load saved selections from SharedPreferences.
         val prefs = context.getSharedPreferences("blocked_apps", Context.MODE_PRIVATE)
         val savedApps = prefs.getStringSet("apps", setOf()) ?: setOf()
         thirdPartyApps.forEach { app ->
@@ -126,9 +135,7 @@ fun MyAppContent(context: Context) {
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Select Apps to Lock") }) },
-        bottomBar = {
-            MyBottomAppBar(context)
-        }
+        bottomBar = { MyBottomAppBar(context) }
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
@@ -147,9 +154,9 @@ fun MyAppContent(context: Context) {
                         modifier = Modifier.padding(12.dp),
                         shape = RectangleShape,
                         onClick = {
-                            // Gets the package names for selected apps
+                            // Get the package names for selected apps.
                             val blockedApps = selectedApps.filter { it.value }.keys
-                            // Save the selections in SharedPreferences
+                            // Save the selections in SharedPreferences.
                             val prefs = context.getSharedPreferences("blocked_apps", Context.MODE_PRIVATE)
                             prefs.edit().putStringSet("apps", blockedApps.toSet()).apply()
                             println("Blocked apps updated: $blockedApps")
@@ -163,24 +170,52 @@ fun MyAppContent(context: Context) {
     }
 }
 
+// Helper function to convert a Drawable to a Bitmap.
+fun drawableToBitmap(drawable: Drawable): Bitmap {
+    if (drawable is BitmapDrawable && drawable.bitmap != null) {
+        return drawable.bitmap
+    }
+    val width = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth else 40
+    val height = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else 40
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    drawable.setBounds(0, 0, canvas.width, canvas.height)
+    drawable.draw(canvas)
+    return bitmap
+}
+
 @Composable
 fun AppItem(appInfo: ApplicationInfo, context: Context, selectedApps: MutableMap<String, Boolean>) {
     val pm = context.packageManager
     val appLabel = appInfo.loadLabel(pm).toString()
-    // Track selection state for the current app
+    // Load the app's icon as a Drawable and convert it to a Bitmap.
+    val iconDrawable = appInfo.loadIcon(pm)
+    val bitmap = remember(iconDrawable) { drawableToBitmap(iconDrawable) }
+    val imageBitmap = bitmap.asImageBitmap()
+
+    // Track the selection state for the current app.
     var isSelected by remember { mutableStateOf(selectedApps[appInfo.packageName] ?: false) }
 
-    Column(
-        modifier = Modifier.fillMaxWidth()
-    ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(text = appLabel, modifier = Modifier.weight(1f))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                Image(
+                    bitmap = imageBitmap,
+                    contentDescription = "$appLabel icon",
+                    modifier = Modifier.size(40.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = appLabel)
+            }
             Checkbox(
                 checked = isSelected,
                 onCheckedChange = { checked ->

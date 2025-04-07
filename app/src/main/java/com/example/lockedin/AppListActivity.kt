@@ -13,8 +13,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import android.graphics.drawable.BitmapDrawable
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.asImageBitmap
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.Drawable
 
 class AppListActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,6 +77,12 @@ fun AppListScreen(context: Context, modifier: Modifier = Modifier) {
 fun AppListItem(appInfo: ApplicationInfo, context: Context) {
     val pm = context.packageManager
     val appName = appInfo.loadLabel(pm).toString()
+    // Load the app's icon as a Drawable.
+    val iconDrawable = appInfo.loadIcon(pm)
+    // Convert the Drawable to a Bitmap using our helper.
+    val bitmap = remember(iconDrawable) { drawableToBitmap(iconDrawable) }
+    val imageBitmap = bitmap.asImageBitmap()
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -81,8 +94,15 @@ fun AppListItem(appInfo: ApplicationInfo, context: Context) {
                     putExtra("packageName", appInfo.packageName)
                 }
                 context.startActivity(intent)
-            }
+            },
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
     ) {
+        Image(
+            bitmap = imageBitmap,
+            contentDescription = "$appName icon",
+            modifier = Modifier.size(40.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
         Text(text = appName)
     }
 }
