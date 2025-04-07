@@ -7,13 +7,11 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.Surface
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import java.util.Calendar
@@ -21,26 +19,39 @@ import java.util.Calendar
 class TimeRangeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Retrieve extras passed from the previous activity
+        // Retrieve extras passed from the previous activity.
         val appName = intent.getStringExtra("appName") ?: "Unknown App"
         val packageName = intent.getStringExtra("packageName") ?: ""
         setContent {
-            Surface(color = MaterialTheme.colorScheme.background) {
-                TimeRangeScreen(appName = appName, packageName = packageName)
-            }
+            TimeRangeScaffold(context = this, appName = appName, packageName = packageName)
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TimeRangeScreen(appName: String, packageName: String) {
+fun TimeRangeScaffold(context: Context, appName: String, packageName: String) {
+    Scaffold(
+        topBar = { TopAppBar(title = { Text("Set Time Range") }) },
+        bottomBar = { MyBottomAppBar(context = context) }
+    ) { innerPadding ->
+        TimeRangeScreen(
+            appName = appName,
+            packageName = packageName,
+            modifier = Modifier.padding(innerPadding)
+        )
+    }
+}
+
+@Composable
+fun TimeRangeScreen(appName: String, packageName: String, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     // State variables for start and end times (as display strings)
     var startTime by remember { mutableStateOf("Select Start Time") }
     var endTime by remember { mutableStateOf("Select End Time") }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
         verticalArrangement = Arrangement.Center,
@@ -61,7 +72,9 @@ fun TimeRangeScreen(appName: String, packageName: String) {
                 calendar.get(Calendar.MINUTE),
                 true
             ).show()
-        }) {
+        },
+            shape = RectangleShape
+        ) {
             Text(text = startTime)
         }
         Spacer(modifier = Modifier.height(16.dp))
@@ -77,24 +90,29 @@ fun TimeRangeScreen(appName: String, packageName: String) {
                 calendar.get(Calendar.MINUTE),
                 true
             ).show()
-        }) {
+        },
+            shape = RectangleShape
+            ) {
             Text(text = endTime)
         }
         Spacer(modifier = Modifier.height(32.dp))
-        // Button to save the time range
+        // Button to save the time range and block the app.
         Button(onClick = {
-            // Save the time range to SharedPreferences for app lock times.
+            // Save the time range to SharedPreferences.
             val appLockPrefs = context.getSharedPreferences("app_lock_times", Context.MODE_PRIVATE)
             appLockPrefs.edit().putString("time_range_$packageName", "$startTime-$endTime").apply()
 
             // Also add the app to the blocked apps list.
             val blockedPrefs = context.getSharedPreferences("blocked_apps", Context.MODE_PRIVATE)
-            val currentBlockedApps = blockedPrefs.getStringSet("apps", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
+            val currentBlockedApps =
+                blockedPrefs.getStringSet("apps", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
             currentBlockedApps.add(packageName)
             blockedPrefs.edit().putStringSet("apps", currentBlockedApps).apply()
 
-            Toast.makeText(context, "Time range saved", Toast.LENGTH_SHORT).show()
-        }) {
+            Toast.makeText(context, "Time range saved and app blocked", Toast.LENGTH_SHORT).show()
+        },
+            shape = RectangleShape
+            ) {
             Text("Save Time Range")
         }
     }
