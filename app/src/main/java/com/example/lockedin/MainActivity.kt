@@ -72,8 +72,8 @@ fun MyBottomAppBar(context: Context) {
                 )
             }
             IconButton(onClick = {
-                // val intent = Intent(context, SettingsActivity::class.java)
-                // context.startActivity(intent)
+                 val intent = Intent(context, AppListActivity::class.java)
+                 context.startActivity(intent)
             }) {
                 Icon(
                     imageVector = Icons.Filled.DateRange,
