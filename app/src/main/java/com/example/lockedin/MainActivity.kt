@@ -9,6 +9,7 @@ import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -50,6 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
+import com.example.lockedin.Components.MyBottomAppBar
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,49 +59,6 @@ class MainActivity : ComponentActivity() {
         // Set the content view with Compose.
         setContent {
             MyAppContent(context = this)
-        }
-    }
-}
-
-@Composable
-fun MyBottomAppBar(context: Context) {
-    BottomAppBar {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Home icon: Launches MainActivity.
-            IconButton(onClick = {
-                val intent = Intent(context, MainActivity::class.java)
-                context.startActivity(intent)
-            }) {
-                Icon(
-                    imageVector = Icons.Filled.Home,
-                    contentDescription = "Home"
-                )
-            }
-            // Time icon: Launches AppListActivity.
-            IconButton(onClick = {
-                val intent = Intent(context, AppListActivity::class.java)
-                context.startActivity(intent)
-            }) {
-                Icon(
-                    imageVector = Icons.Filled.DateRange,
-                    contentDescription = "Time"
-                )
-            }
-            // Settings icon: Launches a Settings activity (if needed).
-            IconButton(onClick = {
-                // Uncomment if you add a SettingsActivity.
-                // val intent = Intent(context, SettingsActivity::class.java)
-                // context.startActivity(intent)
-            }) {
-                Icon(
-                    imageVector = Icons.Filled.Settings,
-                    contentDescription = "Settings"
-                )
-            }
         }
     }
 }
@@ -161,6 +120,8 @@ fun MyAppContent(context: Context) {
                             val prefs = context.getSharedPreferences("blocked_apps", Context.MODE_PRIVATE)
                             prefs.edit().putStringSet("apps", blockedApps.toSet()).apply()
                             println("Blocked apps updated: $blockedApps")
+
+                            Toast.makeText(context, "Apps blocked", Toast.LENGTH_SHORT).show()
                         }
                     ) {
                         Text("Lock Apps")

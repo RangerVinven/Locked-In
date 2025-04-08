@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.Drawable
+import com.example.lockedin.Components.MyBottomAppBar
 
 class AppListActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
