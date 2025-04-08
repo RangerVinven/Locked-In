@@ -21,7 +21,7 @@ class AppBlockAccessibilityService : AccessibilityService() {
                 if (isBlocked(currentPackage)) {
                     val timeRange = getTimeRangeForPackage(currentPackage)
                     Log.d("AppBlockService", "Retrieved time range: $timeRange")
-                    if (timeRange != null && isCurrentTimeWithinRange(timeRange)) {
+                    if ((timeRange != null && isCurrentTimeWithinRange(timeRange)) || timeRange == null) {
                         Log.d("AppBlockService", "Time is within range; launching LockedOutActivity")
                         val intent = Intent(this, LockedOutActivity::class.java).apply {
                             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
