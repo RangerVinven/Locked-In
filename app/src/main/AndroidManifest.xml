@@ -67,6 +67,8 @@
             android:exported="true"
             android:label="Set Time Range" />
 
+        <activity android:name=".SettingsActivity" />
+        <activity android:name=".ManageSubscriptionActivity" />
 
     </application>
 
